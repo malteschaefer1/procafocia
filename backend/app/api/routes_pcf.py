@@ -1,6 +1,8 @@
 """PCF run endpoints."""
 from __future__ import annotations
 
+from dataclasses import asdict
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -9,13 +11,18 @@ from ..data_providers.probas_provider import ProBasProvider
 from ..engines.pcf_engine_brightway import BrightwayPCFEngine
 from ..schemas.results_schema import ResultSetSchema
 from ..services import state
+from ..services.mapping_repository import MappingRepository
 from ..services.mapping_service import MappingService
 from ..services.pcf_service import PCFService
 from ..services.scenario_service import ScenarioService
 
 router = APIRouter(prefix="/pcf", tags=["pcf"])
 _pcf_service = PCFService(engine=BrightwayPCFEngine())
-_mapping_service = MappingService(providers=[ProBasProvider(), BoaviztaProvider()])
+_mapping_repository = MappingRepository()
+_mapping_service = MappingService.from_settings(
+    providers=[ProBasProvider(), BoaviztaProvider()],
+    repository=_mapping_repository,
+)
 _scenario_service = ScenarioService()
 
 
@@ -37,6 +44,18 @@ def run_pcf(request: PCFRunRequest) -> ResultSetSchema:
 
     mapping_log = _mapping_service.map_bom(bom, scenario)
     result_set = _pcf_service.run(bom=bom, scenario=scenario, method_profile=method_profile)
-    result_set.provenance["mapping_log"] = [entry.__dict__ for entry in mapping_log]
+    result_set.provenance["mapping_log"] = [
+        {
+            "item_id": entry.item_id,
+            "selected": asdict(entry.selected) if entry.selected else None,
+            "alternatives": [asdict(alt) for alt in entry.alternatives],
+            "reasoning": entry.reasoning,
+            "rule_applied": entry.rule_applied,
+            "auto_selected": entry.auto_selected,
+            "override_applied": entry.override_applied,
+            "confidence_score": entry.confidence_score,
+        }
+        for entry in mapping_log
+    ]
 
     return ResultSetSchema(**result_set.__dict__)

@@ -12,6 +12,9 @@ class Settings(BaseModel):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     log_level: str = "INFO"
+    database_url: str = "sqlite:///./procafocia.db"
+    mapping_min_similarity_for_candidate: float = 0.6
+    mapping_min_similarity_for_auto_accept: float = 0.85
 
     class Config:
         env_file = ".env"

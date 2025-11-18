@@ -1,0 +1,7 @@
+product_id,bom_item_id,parent_bom_item_id,description,quantity,unit,mass_kg,material_family,material_code,classification_unspsc,supplier_id,recycled_content_share,reused_share,remanufactured_share,recyclability_rate,landfill_rate,incineration_rate,country_of_origin,manufacturing_location,lci_dataset_id
+prod-drill,B-100,,ABS housing upper,1,ea,0.6,Polymer,ABS-HOUSING,27112703,SUP-HOUSING,0.1,0,0,0.8,0.15,0.05,CN,CN,
+prod-drill,B-110,B-100,ABS housing lower,1,ea,0.55,Polymer,ABS-HOUSING,27112703,SUP-HOUSING,0.1,0,0,0.8,0.15,0.05,CN,CN,
+prod-drill,B-120,,Gearbox machined steel,1,ea,0.7,Steel,STL-GEAR,27111702,SUP-GEARWORKS,0.2,0,0,0.9,0.07,0.03,DE,DE,
+prod-drill,B-130,,Copper stator winding,1,ea,0.4,Metals,CU-WIRE,26111710,,0.05,0,0,0.95,0.03,0.02,CN,CN,
+prod-drill,B-140,,Electronics control PCB,1,ea,0.2,Electronics,PCB-CONTROL,26111703,,0.1,0,0,0.6,0.3,0.1,CN,CN,
+prod-drill,B-150,,Steel chuck,1,ea,0.35,Steel,STL-CHUCK,27112710,SUP-GEARWORKS,0.1,0,0,0.9,0.05,0.05,DE,DE,

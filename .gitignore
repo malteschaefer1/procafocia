@@ -16,3 +16,4 @@ frontend/node_modules/
 .eggs/
 *.log
 *.sqlite3
+*.db

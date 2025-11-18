@@ -12,7 +12,9 @@ dependencies = [
     "pandas",
     "python-dotenv",
     "httpx",
-    "aiofiles"
+    "aiofiles",
+    "sqlalchemy>=2.0",
+    "rapidfuzz>=3.0"
 ]
 
 [project.optional-dependencies]
@@ -23,6 +25,9 @@ dev = [
     "faker",
     "types-aiofiles"
 ]
+
+[tool.setuptools.packages.find]
+include = ["backend*"]
 
 [build-system]
 requires = ["setuptools>=61.0"]

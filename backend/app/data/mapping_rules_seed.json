@@ -1,0 +1,78 @@
+[
+  {
+    "name": "Direct Aluminum Extrusion",
+    "rule_code": "material_code",
+    "priority": 10,
+    "material_code": "ALU-6000",
+    "dataset_id": "prob:aluminium-extrusion",
+    "provider": "ProBas",
+    "description": "Mapped via internal alloy material code."
+  },
+  {
+    "name": "Steel Fastener",
+    "rule_code": "material_code",
+    "priority": 10,
+    "material_code": "STL-FASTENER",
+    "dataset_id": "prob:steel-fastener",
+    "provider": "ProBas",
+    "description": "Standard steel fastener dataset."
+  },
+  {
+    "name": "Polymer seat shell",
+    "rule_code": "family_unspsc",
+    "priority": 20,
+    "material_family": "Polymer",
+    "classification_unspsc_prefix": "561121",
+    "dataset_id": "boavizta:pp-injection",
+    "provider": "Boavizta",
+    "description": "Fallback for polymer chair components (UNSPSC 561121)."
+  },
+  {
+    "name": "Supplier foam override",
+    "rule_code": "supplier_override",
+    "priority": 5,
+    "material_family": "Polyurethane",
+    "supplier_id": "SUP-FOAM-A",
+    "dataset_id": "prob:polyurethane-flexible",
+    "provider": "ProBas",
+    "description": "Supplier-certified foam dataset."
+  },
+  {
+    "name": "Drill housing ABS",
+    "rule_code": "material_code",
+    "priority": 10,
+    "material_code": "ABS-HOUSING",
+    "dataset_id": "prob:abs-injection",
+    "provider": "ProBas",
+    "description": "ABS injection moulded housing."
+  },
+  {
+    "name": "Copper winding",
+    "rule_code": "material_code",
+    "priority": 10,
+    "material_code": "CU-WIRE",
+    "dataset_id": "prob:copper-wire-drawn",
+    "provider": "ProBas",
+    "description": "Copper winding wire dataset."
+  },
+  {
+    "name": "Electronics UNSPSC fallback",
+    "rule_code": "family_unspsc",
+    "priority": 30,
+    "material_family": "Electronics",
+    "classification_unspsc_prefix": "261117",
+    "dataset_id": "boavizta:pcba-generic",
+    "provider": "Boavizta",
+    "description": "Generic PCB assembly dataset for UNSPSC 261117."
+  },
+  {
+    "name": "Supplier gear override",
+    "rule_code": "supplier_override",
+    "priority": 5,
+    "material_family": "Steel",
+    "supplier_id": "SUP-GEARWORKS",
+    "dataset_id": "prob:steel-machined",
+    "provider": "ProBas",
+    "description": "Supplier gear machining dataset."
+  }
+]

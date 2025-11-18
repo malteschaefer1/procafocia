@@ -1,3 +1,9 @@
+import os
+from pathlib import Path
+
+TEST_DB = Path(__file__).resolve().parent / "test_api.db"
+os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB}"
+
 from fastapi.testclient import TestClient
 
 from backend.app.main import app
@@ -41,3 +47,7 @@ def test_product_bom_and_pcf_flow():
     body = response.json()
     assert "pcf_total_kg_co2e" in body
     assert body["pcf_total_kg_co2e"] > 0
+
+    history = client.get("/mapping/history/prod-1")
+    assert history.status_code == 200
+    assert len(history.json()) >= 1

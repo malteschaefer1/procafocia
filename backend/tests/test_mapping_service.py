@@ -1,37 +1,37 @@
-from backend.app.models.bom import BOMItem
-from backend.app.models.scenario import Scenario
-from backend.app.services.mapping_service import MappingService
-from backend.app.data_providers.lci_provider_base import LCIProcessCandidate, LCIProvider
+import os
+from pathlib import Path
+
+TEST_DB = Path(__file__).resolve().parent / "test_mapping.db"
+os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB}"
+
+from backend.app.db.init_db import init_db  # noqa: E402
+from backend.app.models.bom import BOMItem  # noqa: E402
+from backend.app.models.scenario import Scenario  # noqa: E402
+from backend.app.services.mapping_repository import MappingRepository  # noqa: E402
+from backend.app.services.mapping_service import MappingService  # noqa: E402
 
 
-class _FakeProvider:
-    name = "fake"
-
-    def find_candidates(self, item: BOMItem):
-        return [
-            LCIProcessCandidate(
-                provider=self.name,
-                dataset_id="mat123",
-                name="dataset",
-                description="desc",
-                confidence_score=0.8,
-                mapping_rule_id="rule1",
-                metadata={},
-            )
-        ]
-
-
-def test_mapping_service_selects_candidate():
-    item = BOMItem(
+def _make_item(material_code: str) -> BOMItem:
+    return BOMItem(
         id="i1",
-        product_id="p1",
+        product_id="prod-chair",
+        parent_bom_item_id=None,
         description="Aluminum part",
-        classification="123",
-        material_code="AL",
-        component_code=None,
-        mass_kg=2.0,
         quantity=1,
+        unit="ea",
+        mass_kg=2.0,
+        material_family="Aluminum",
+        material_code=material_code,
+        classification_unspsc="56112105",
+        supplier_id=None,
     )
+
+
+def test_mapping_service_uses_material_code_rule():
+    init_db()
+    repository = MappingRepository()
+    service = MappingService(providers=[], repository=repository, min_candidate=0.6, min_auto=0.85)
+
     scenario = Scenario(
         id="default",
         name="Default",
@@ -42,7 +42,7 @@ def test_mapping_service_selects_candidate():
         energy_mix_profile="",
         end_of_life_model="",
     )
-    service = MappingService(providers=[_FakeProvider()])
-    decisions = service.map_bom([item], scenario)
+
+    decisions = service.map_bom([_make_item("ALU-6000")], scenario)
     assert decisions[0].selected is not None
-    assert decisions[0].selected.dataset_id == "mat123"
+    assert decisions[0].selected.dataset_id == "prob:aluminium-extrusion"
