@@ -1,0 +1,29 @@
+[project]
+name = "procafocia"
+version = "0.1.0"
+description = "Product Carbon Footprint & Circularity Assessment demonstrator"
+authors = [{name = "Open Source Contributors"}]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic>=2.5",
+    "pandas",
+    "python-dotenv",
+    "httpx",
+    "aiofiles"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "requests",
+    "faker",
+    "types-aiofiles"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

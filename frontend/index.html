@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>procafocia demo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <h1>PCF & Circularity Demo</h1>
+    <section>
+      <h2>Upload BOM (JSON)</h2>
+      <textarea id="bom-input" rows="10" cols="60">[{"id":"item-1","product_id":"prod-frontend","description":"Aluminum part","mass_kg":1.0,"quantity":1}]</textarea>
+      <button id="upload-bom">Upload</button>
+    </section>
+    <section>
+      <button id="run-pcf">Run PCF</button>
+      <button id="run-circularity">Run Circularity</button>
+    </section>
+    <pre id="output"></pre>
+    <script src="app.js"></script>
+  </body>
+</html>
