@@ -2,6 +2,21 @@
 
 Procafocia is an open-source demonstrator that maps Bills of Materials (BOMs) to transparent Product Carbon Footprint (PCF) and Product Circularity Indicator (PCI) results. The goal is to provide research-grade scaffolding with clear interfaces, provenance tracking, and room for future Brightway2 / data source integrations.
 
+## New to coding? Start here
+This project is intentionally approachable. If you have never touched GitHub or Python before, the key ideas are:
+
+1. **What the tool does** – You provide a simple table (a BOM) that lists each part of a product. The backend maps every part to example environmental datasets, then calculates both carbon footprint (PCF) and circularity (PCI). All mapping decisions are stored so you can inspect them before trusting the numbers.
+2. **How files are organized** – Everything that powers the server sits in the `backend/` folder (written in Python). A tiny user interface lives in `frontend/`. Sample data and helper scripts live in `examples/`. The rest of the files describe dependencies or optional container setups.
+3. **How to run it locally**
+   - Install Python 3.11 or later.
+   - Open a terminal, run the commands in the “Getting started” section below (create virtual environment, install dependencies, start the FastAPI server).
+   - Open another terminal and serve the frontend directory or open `frontend/index.html` directly in your browser.
+   - Use the UI buttons (or the API) to create a product, upload `examples/bom_office_chair.csv`, review mappings, and trigger calculations.
+4. **Inspecting results** – After a BOM is uploaded, visit `http://localhost:8000/docs` to try endpoints such as `/mapping/review/{product_id}`, `/pcf/run`, or `/circularity/pci/{product_id}`. The frontend mirrors these actions with a friendlier surface.
+5. **Where to contribute** – If you want to help, most of the future work is noted in `STATUS.md`. Pick an open item, create an issue or pull request, and reference the file/section you updated.
+
+No special hardware or paid services are required. The code sticks to plain Python, FastAPI, and SQLite so you can explore and extend it without needing prior experience with large frameworks.
+
 ## Features
 - Domain-centric models (`Product`, `BOMItem`, `Scenario`, `MethodProfile`, `ResultSet`) persisted in SQLite for reproducibility and provenance.
 - Swappable engine layer: Brightway2 PCF stub + PCI (Bracquené et al. 2020) flows with full linear-reference and per-material breakdowns.
