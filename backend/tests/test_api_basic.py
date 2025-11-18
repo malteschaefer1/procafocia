@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 
 TEST_DB = Path(__file__).resolve().parent / "test_api.db"
+if TEST_DB.exists():
+    TEST_DB.unlink()
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB}"
 
 from fastapi.testclient import TestClient
@@ -31,16 +33,23 @@ def test_product_bom_and_pcf_flow():
         {
             "id": "item-1",
             "product_id": "prod-1",
+            "parent_bom_item_id": None,
             "description": "Aluminum housing",
-            "classification": "", 
-            "material_code": "AL",
-            "component_code": None,
-            "mass_kg": 1.2,
             "quantity": 1,
+            "unit": "ea",
+            "mass_kg": 1.2,
+            "material_family": "Aluminum",
+            "material_code": "ALU-6000",
+            "classification_unspsc": "000000",
+            "supplier_id": None,
         }
     ]
     response = client.post("/bom/upload", json=bom_payload)
     assert response.status_code == 200
+
+    review = client.get("/mapping/review/prod-1")
+    assert review.status_code == 200
+    assert len(review.json()) >= 1
 
     response = client.post("/pcf/run", json={"product_id": "prod-1"})
     assert response.status_code == 200
@@ -51,3 +60,8 @@ def test_product_bom_and_pcf_flow():
     history = client.get("/mapping/history/prod-1")
     assert history.status_code == 200
     assert len(history.json()) >= 1
+
+    pci = client.get("/circularity/pci/prod-1")
+    assert pci.status_code == 200
+    pci_body = pci.json()
+    assert "pci_product" in pci_body

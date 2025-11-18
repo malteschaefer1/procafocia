@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 
 TEST_DB = Path(__file__).resolve().parent / "test_mapping.db"
+if TEST_DB.exists():
+    TEST_DB.unlink()
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB}"
 
 from backend.app.db.init_db import init_db  # noqa: E402

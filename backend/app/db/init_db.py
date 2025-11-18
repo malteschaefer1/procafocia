@@ -6,8 +6,9 @@ from pathlib import Path
 
 from sqlalchemy import select
 
+from ..data.default_scenarios import default_scenarios
 from .base import Base, engine, get_session
-from .models import MappingRuleModel
+from .models import MappingRuleModel, ScenarioModel
 
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
@@ -18,6 +19,7 @@ def init_db() -> None:
 
     Base.metadata.create_all(bind=engine)
     seed_mapping_rules()
+    seed_scenarios()
 
 
 def seed_mapping_rules() -> None:
@@ -28,10 +30,10 @@ def seed_mapping_rules() -> None:
     with get_session() as session:
         for entry in payload:
             stmt = select(MappingRuleModel).where(
-                (MappingRuleModel.rule_code == entry["rule_code"]) &
-                (MappingRuleModel.dataset_id == entry["dataset_id"]) &
-                (MappingRuleModel.material_code == entry.get("material_code")) &
-                (MappingRuleModel.material_family == entry.get("material_family"))
+                (MappingRuleModel.rule_code == entry["rule_code"])
+                & (MappingRuleModel.dataset_id == entry["dataset_id"])
+                & (MappingRuleModel.material_code == entry.get("material_code"))
+                & (MappingRuleModel.material_family == entry.get("material_family"))
             )
             exists = session.scalars(stmt).first()
             if exists:
@@ -49,4 +51,31 @@ def seed_mapping_rules() -> None:
                 description=entry.get("description"),
             )
             session.add(rule)
+        session.commit()
+
+
+def seed_scenarios() -> None:
+    payload = default_scenarios()
+    with get_session() as session:
+        for entry in payload:
+            existing = session.get(ScenarioModel, entry["id"])
+            if existing:
+                continue
+            scenario = ScenarioModel(
+                id=entry["id"],
+                name=entry["name"],
+                goal_scope=entry["goal_scope"],
+                system_boundary=entry["system_boundary"],
+                geography=entry["geography"],
+                method_profile_id=entry["method_profile_id"],
+                energy_mix_profile=entry["energy_mix_profile"],
+                end_of_life_model=entry["end_of_life_model"],
+                collection_fraction_for_reuse=entry.get("collection_fraction_for_reuse", 0.0),
+                collection_fraction_for_recycling=entry.get("collection_fraction_for_recycling", 0.0),
+                utility_factor=entry.get("utility_factor"),
+                design_lifetime_functional_units=entry.get("design_lifetime_functional_units"),
+                actual_used_functional_units=entry.get("actual_used_functional_units"),
+                material_parameters=json.dumps(entry.get("material_parameters", {})),
+            )
+            session.add(scenario)
         session.commit()

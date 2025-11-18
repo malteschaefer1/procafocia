@@ -3,9 +3,9 @@
 Procafocia is an open-source demonstrator that maps Bills of Materials (BOMs) to transparent Product Carbon Footprint (PCF) and Product Circularity Indicator (PCI) results. The goal is to provide research-grade scaffolding with clear interfaces, provenance tracking, and room for future Brightway2 / data source integrations.
 
 ## Features
-- Domain-centric models (`Product`, `BOMItem`, `Scenario`, `MethodProfile`, `ResultSet`).
-- Swappable engine layer: Brightway2 PCF stub + PCI (Bracquene et al. 2020) scaffold.
-- Canonical BOM samples (office chair & cordless drill), deterministic + fuzzy mapping rules, and override workflow backed by SQLite.
+- Domain-centric models (`Product`, `BOMItem`, `Scenario`, `MethodProfile`, `ResultSet`) persisted in SQLite for reproducibility and provenance.
+- Swappable engine layer: Brightway2 PCF stub + PCI (Bracquené et al. 2020) flows with full linear-reference and per-material breakdowns.
+- Canonical BOM samples, deterministic + fuzzy mapping rules with overrides, plus a mapping-review flow (API/CLI/UI) to inspect candidates before PCF/PCI runs.
 - FastAPI backend + minimal frontend for BOM upload, mapping review, and calculation triggers.
 - Audit bundle exporter and mapping history APIs for transparency.
 
@@ -28,7 +28,7 @@ examples/       # Sample BOM & script
    uvicorn backend.app.main:app --reload
    ```
 3. **Open frontend**: Serve `frontend/` (e.g., `python -m http.server 8080 -d frontend`) and ensure the backend is on `http://localhost:8000`.
-4. **Try the API**: Use `examples/demo_script.py --bom examples/bom_office_chair.csv` or call endpoints via `http://localhost:8000/docs`.
+4. **Try the API**: Use `examples/demo_script.py --bom examples/bom_office_chair.csv` or call endpoints via `http://localhost:8000/docs` (e.g., `GET /circularity/pci/{product_id}`, `GET /mapping/review/{product_id}`).
 
 ## Tests
 ```
@@ -39,6 +39,7 @@ pytest backend/tests
 - Canonical BOM schema includes: `product_id`, `bom_item_id`, parent references, mass, `material_family/material_code`, UNSPSC classification, supplier, circularity shares, and optional `lci_dataset_id`.
 - Deterministic rule order: BOM-specified dataset → material code → (`material_family` + `UNSPSC prefix`) → supplier override → fuzzy providers (RapidFuzz scoring with configurable thresholds).
 - Mapping state stored in SQLite (`procafocia.db`) with `mapping_rules` and `mapping_decisions` tables; history exposed via `/mapping/history/{product_id}` and overrides via `POST /mapping/override`.
+- Mapping review flow available via `/mapping/review/{product_id}` (also wired into the frontend button and `examples/mapping_review_cli.py`).
 - Seed data lives in `backend/app/data/mapping_rules_seed.json` and is loaded automatically on startup; edit or extend this file to reflect new datasets or rule systems.
 - Example BOMs for Product A (office chair) and Product B (cordless drill) are in `examples/`, matching the canonical schema for quick experimentation.
 

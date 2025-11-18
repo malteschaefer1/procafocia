@@ -51,7 +51,8 @@ def main() -> None:
         print(entry)
 
     print("\nPCF total (kg CO2e):", pcf_results.pcf_total_kg_co2e)
-    print("Circularity PCI score:", circularity_results.circularity_indicators.get("pci"))
+    pci_payload = circularity_results.circularity_indicators.get("pci_result", {})
+    print("Circularity PCI score:", pci_payload.get("pci_product"))
 
 
 if __name__ == "__main__":

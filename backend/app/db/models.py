@@ -1,11 +1,15 @@
 """SQLAlchemy ORM models for persistence."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
+
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class ProductModel(Base):
@@ -15,17 +19,19 @@ class ProductModel(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     version: Mapped[str] = mapped_column(String, nullable=False)
     functional_unit: Mapped[str] = mapped_column(String, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    lifetime_years: Mapped[float | None] = mapped_column(Float, nullable=True)
+    use_profile: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
-    bom_items: Mapped[list["BOMItemModel"]] = relationship("BOMItemModel", back_populates="product")
+    bom_items: Mapped[list["BOMItemModel"]] = relationship("BOMItemModel", back_populates="product", cascade="all, delete-orphan")
 
 
 class BOMItemModel(Base):
     __tablename__ = "bom_items"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
-    product_id: Mapped[str] = mapped_column(String, ForeignKey("products.id"), nullable=False)
+    product_id: Mapped[str] = mapped_column(String, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
     parent_bom_item_id: Mapped[str | None] = mapped_column(String, nullable=True)
     description: Mapped[str] = mapped_column(String, nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
@@ -49,6 +55,27 @@ class BOMItemModel(Base):
     product: Mapped[ProductModel] = relationship(ProductModel, back_populates="bom_items")
 
 
+class ScenarioModel(Base):
+    __tablename__ = "scenarios"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    goal_scope: Mapped[str] = mapped_column(String, nullable=False)
+    system_boundary: Mapped[str] = mapped_column(String, nullable=False)
+    geography: Mapped[str] = mapped_column(String, nullable=False)
+    method_profile_id: Mapped[str] = mapped_column(String, nullable=False)
+    energy_mix_profile: Mapped[str] = mapped_column(String, nullable=False)
+    end_of_life_model: Mapped[str] = mapped_column(String, nullable=False)
+    collection_fraction_for_reuse: Mapped[float] = mapped_column(Float, default=0.0)
+    collection_fraction_for_recycling: Mapped[float] = mapped_column(Float, default=0.0)
+    utility_factor: Mapped[float | None] = mapped_column(Float, nullable=True)
+    design_lifetime_functional_units: Mapped[float | None] = mapped_column(Float, nullable=True)
+    actual_used_functional_units: Mapped[float | None] = mapped_column(Float, nullable=True)
+    material_parameters: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
 class MappingRuleModel(Base):
     __tablename__ = "mapping_rules"
 
@@ -63,8 +90,8 @@ class MappingRuleModel(Base):
     dataset_id: Mapped[str] = mapped_column(String, nullable=False)
     provider: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
 
 class MappingDecisionModel(Base):
@@ -83,5 +110,5 @@ class MappingDecisionModel(Base):
     decision_payload: Mapped[str | None] = mapped_column(Text, nullable=True)
     auto_selected: Mapped[bool] = mapped_column(Boolean, default=True)
     is_override: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)

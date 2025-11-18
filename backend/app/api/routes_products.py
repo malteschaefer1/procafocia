@@ -1,24 +1,26 @@
 """Product routes."""
 from __future__ import annotations
 
+from dataclasses import asdict
+
 from fastapi import APIRouter, HTTPException
 
 from ..models.product import Product
 from ..schemas.product_schema import ProductCreate, ProductResponse
-from ..services import state
+from ..services.product_repository import ProductRepository
 
 router = APIRouter(prefix="/products", tags=["products"])
+_repository = ProductRepository()
 
 
 @router.get("", response_model=list[ProductResponse])
 def list_products() -> list[ProductResponse]:
-    return [ProductResponse(**product.__dict__) for product in state.products.values()]
+    products = _repository.list_products()
+    return [ProductResponse(**asdict(product)) for product in products]
 
 
 @router.post("", response_model=ProductResponse)
 def create_product(payload: ProductCreate) -> ProductResponse:
-    if payload.id in state.products:
-        raise HTTPException(status_code=400, detail="Product already exists")
     product = Product(
         id=payload.id,
         name=payload.name,
@@ -27,5 +29,8 @@ def create_product(payload: ProductCreate) -> ProductResponse:
         lifetime_years=payload.lifetime_years,
         use_profile=payload.use_profile,
     )
-    state.products[product.id] = product
-    return ProductResponse(**product.__dict__)
+    try:
+        stored = _repository.create_product(product)
+    except ValueError as exc:  # duplicate id
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return ProductResponse(**asdict(stored))

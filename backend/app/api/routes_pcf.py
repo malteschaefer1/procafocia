@@ -10,10 +10,10 @@ from ..data_providers.boavizta_provider import BoaviztaProvider
 from ..data_providers.probas_provider import ProBasProvider
 from ..engines.pcf_engine_brightway import BrightwayPCFEngine
 from ..schemas.results_schema import ResultSetSchema
-from ..services import state
 from ..services.mapping_repository import MappingRepository
 from ..services.mapping_service import MappingService
 from ..services.pcf_service import PCFService
+from ..services.product_repository import ProductRepository
 from ..services.scenario_service import ScenarioService
 
 router = APIRouter(prefix="/pcf", tags=["pcf"])
@@ -23,6 +23,7 @@ _mapping_service = MappingService.from_settings(
     providers=[ProBasProvider(), BoaviztaProvider()],
     repository=_mapping_repository,
 )
+_product_repository = ProductRepository()
 _scenario_service = ScenarioService()
 
 
@@ -33,13 +34,14 @@ class PCFRunRequest(BaseModel):
 
 @router.post("/run", response_model=ResultSetSchema)
 def run_pcf(request: PCFRunRequest) -> ResultSetSchema:
-    if request.product_id not in state.boms:
-        raise HTTPException(status_code=404, detail="BOM not uploaded for product")
-    if request.product_id not in state.products:
+    product = _product_repository.get_product(request.product_id)
+    if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    bom = _product_repository.get_bom(request.product_id)
+    if not bom:
+        raise HTTPException(status_code=404, detail="BOM not uploaded for product")
 
-    bom = state.boms[request.product_id]
-    scenario = _scenario_service.get_scenario(request.scenario_id)
+    scenario = _get_scenario_or_404(request.scenario_id)
     method_profile = _scenario_service.get_method_profile(scenario.method_profile_id)
 
     mapping_log = _mapping_service.map_bom(bom, scenario)
@@ -59,3 +61,10 @@ def run_pcf(request: PCFRunRequest) -> ResultSetSchema:
     ]
 
     return ResultSetSchema(**result_set.__dict__)
+
+
+def _get_scenario_or_404(scenario_id: str):
+    try:
+        return _scenario_service.get_scenario(scenario_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc

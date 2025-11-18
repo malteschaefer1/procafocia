@@ -129,3 +129,15 @@ class MappingRepository:
             .order_by(desc(MappingDecisionModel.created_at))
         )
         return list(session.scalars(stmt).all())
+
+    def latest_decisions_for_product(self, session: Session, product_id: str) -> list[MappingDecisionModel]:
+        stmt = (
+            select(MappingDecisionModel)
+            .where(MappingDecisionModel.product_id == product_id)
+            .order_by(desc(MappingDecisionModel.created_at))
+        )
+        latest: dict[str, MappingDecisionModel] = {}
+        for entry in session.scalars(stmt).all():
+            if entry.bom_item_id not in latest:
+                latest[entry.bom_item_id] = entry
+        return list(latest.values())
