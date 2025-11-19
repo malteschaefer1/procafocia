@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from ..models.method_profile import PCFMethodID
+
 
 class MaterialCircularityParametersSchema(BaseModel):
     material_key: str
@@ -24,6 +26,7 @@ class ScenarioSchema(BaseModel):
     method_profile_id: str
     energy_mix_profile: str
     end_of_life_model: str
+    pcf_method_id: PCFMethodID = PCFMethodID.PACT_V3
     collection_fraction_for_reuse: float = 0.0
     collection_fraction_for_recycling: float = 0.0
     utility_factor: float | None = None

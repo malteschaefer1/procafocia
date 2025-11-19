@@ -5,6 +5,7 @@ from typing import Any
 
 from ..models.bom import BOMItem
 from ..models.method_profile import MethodProfile
+from ..models.product import Product
 from ..models.scenario import Scenario
 from .pcf_engine_base import LCIModel, PCFEngine, PCFResult
 
@@ -34,10 +35,11 @@ class BrightwayPCFEngine(PCFEngine):
 
         mappings: list[dict[str, Any]] = []
         for item in bom:
+            classification = getattr(item, "classification_unspsc", None)
             mappings.append(
                 {
                     "item_id": item.id,
-                    "process_key": f"stub-process-{item.material_code or item.classification}",
+                    "process_key": f"stub-process-{item.material_code or classification}",
                     "quantity": item.quantity,
                     "mass_kg": item.mass_kg,
                     "notes": "TODO: fetch dataset from Brightway and align units",
@@ -45,9 +47,16 @@ class BrightwayPCFEngine(PCFEngine):
             )
         return LCIModel(bom_items=bom, mappings=mappings)
 
-    def calculate_pcf(self, lci_model: LCIModel, scenario: Scenario, method_profile: MethodProfile) -> PCFResult:
+    def calculate_pcf(
+        self,
+        product: Product,
+        bom_items: list[BOMItem],
+        scenario: Scenario,
+        method_profile: MethodProfile,
+    ) -> PCFResult:
         """Run a Brightway LCA and summarize PCF results."""
 
+        lci_model = self.map_bom_to_lci(bom_items, scenario)
         # TODO: Build Brightway demand vector using `lci_model` data.
         # TODO: Execute LCI + LCIA steps with the selected method profile.
         total = sum(item.mass_kg * 1.5 for item in lci_model.bom_items)  # placeholder factor
@@ -57,4 +66,17 @@ class BrightwayPCFEngine(PCFEngine):
             "manufacturing": total * 0.3,
             "distribution": total * 0.1,
         }
-        return PCFResult(total_kg_co2e=total, breakdown_by_item=breakdown_by_item, breakdown_by_stage=breakdown_by_stage)
+        provenance = {
+            "pcf_method_id": method_profile.id.value,
+            "pcf_method_name": method_profile.name,
+            "system_boundary": method_profile.system_boundary,
+            "notes": "Placeholder Brightway2 calculation; currently cradle-to-gate regardless of method.",
+        }
+        if method_profile.system_boundary == "cradle_to_grave":
+            provenance["todo"] = "Model use phase and end-of-life flows for cradle-to-grave methods."
+        return PCFResult(
+            total_kg_co2e=total,
+            breakdown_by_item=breakdown_by_item,
+            breakdown_by_stage=breakdown_by_stage,
+            provenance=provenance,
+        )

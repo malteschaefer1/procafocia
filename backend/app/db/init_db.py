@@ -18,6 +18,7 @@ def init_db() -> None:
     """Create tables and seed canonical data if needed."""
 
     Base.metadata.create_all(bind=engine)
+    ensure_schema_upgrades()
     seed_mapping_rules()
     seed_scenarios()
 
@@ -79,3 +80,20 @@ def seed_scenarios() -> None:
             )
             session.add(scenario)
         session.commit()
+
+
+def ensure_schema_upgrades() -> None:
+    """Apply lightweight schema tweaks for SQLite deployments."""
+
+    with engine.connect() as conn:
+        # Scenario table adjustments
+        scenario_cols = {row["name"] for row in conn.exec_driver_sql("PRAGMA table_info(scenarios)").mappings()}
+        if "pcf_method_id" not in scenario_cols:
+            conn.exec_driver_sql("ALTER TABLE scenarios ADD COLUMN pcf_method_id TEXT DEFAULT 'PACT_V3'")
+
+        # Product table adjustments
+        product_cols = {row["name"] for row in conn.exec_driver_sql("PRAGMA table_info(products)").mappings()}
+        if "lifetime_years" not in product_cols:
+            conn.exec_driver_sql("ALTER TABLE products ADD COLUMN lifetime_years FLOAT")
+        if "use_profile" not in product_cols:
+            conn.exec_driver_sql("ALTER TABLE products ADD COLUMN use_profile TEXT")

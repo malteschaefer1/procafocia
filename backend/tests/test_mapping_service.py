@@ -9,6 +9,7 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB}"
 from backend.app.db.init_db import init_db  # noqa: E402
 from backend.app.models.bom import BOMItem  # noqa: E402
 from backend.app.models.scenario import Scenario  # noqa: E402
+from backend.app.models.method_profile import PCFMethodID  # noqa: E402
 from backend.app.services.mapping_repository import MappingRepository  # noqa: E402
 from backend.app.services.mapping_service import MappingService  # noqa: E402
 
@@ -41,6 +42,7 @@ def test_mapping_service_uses_material_code_rule():
         system_boundary="",
         geography="",
         method_profile_id="iso-basic",
+        pcf_method_id=PCFMethodID.PACT_V3,
         energy_mix_profile="",
         end_of_life_model="",
     )

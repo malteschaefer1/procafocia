@@ -11,7 +11,8 @@ class ProBasProvider:
     name = "ProBas"
 
     def find_candidates(self, item: BOMItem) -> list[LCIProcessCandidate]:
-        dataset_id = f"prob_{item.material_code or item.classification or 'generic'}"
+        classification = getattr(item, "classification_unspsc", None)
+        dataset_id = f"prob_{item.material_code or classification or 'generic'}"
         rule_id = "prob-material-code" if item.material_code else "prob-classification"
         confidence = 0.9 if item.material_code else 0.6
         return [
@@ -22,6 +23,6 @@ class ProBasProvider:
                 description="Stub dataset - replace with ProBas lookup",
                 confidence_score=confidence,
                 mapping_rule_id=rule_id,
-                metadata={"match_basis": item.material_code or item.classification or "n/a"},
+                metadata={"match_basis": item.material_code or classification or "n/a"},
             )
         ]

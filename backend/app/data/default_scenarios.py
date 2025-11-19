@@ -91,6 +91,7 @@ def default_scenarios() -> list[dict]:
             "system_boundary": "cradle-to-gate",
             "geography": "EU",
             "method_profile_id": "iso-basic",
+            "pcf_method_id": "PACT_V3",
             "energy_mix_profile": "EU-avg",
             "end_of_life_model": "EU-2019",
             "collection_fraction_for_reuse": 0.15,

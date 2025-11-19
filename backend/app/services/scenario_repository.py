@@ -10,6 +10,7 @@ from ..db.base import get_session
 from ..db.models import ScenarioModel
 from ..models.pci import MaterialCircularityParameters
 from ..models.scenario import Scenario
+from ..models.method_profile import PCFMethodID
 
 
 class ScenarioRepository:
@@ -41,6 +42,7 @@ class ScenarioRepository:
             system_boundary=model.system_boundary,
             geography=model.geography,
             method_profile_id=model.method_profile_id,
+            pcf_method_id=PCFMethodID(model.pcf_method_id) if model.pcf_method_id else PCFMethodID.PACT_V3,
             energy_mix_profile=model.energy_mix_profile,
             end_of_life_model=model.end_of_life_model,
             collection_fraction_for_reuse=model.collection_fraction_for_reuse,

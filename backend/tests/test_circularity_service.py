@@ -5,6 +5,7 @@ from backend.app.models.bom import BOMItem
 from backend.app.models.pci import MaterialCircularityParameters
 from backend.app.models.product import Product
 from backend.app.models.scenario import Scenario
+from backend.app.models.method_profile import PCFMethodID
 from backend.app.services.circularity_service import CircularityService
 
 
@@ -47,6 +48,7 @@ def _make_scenario(collection_reuse: float, collection_recycling: float, utility
         system_boundary="",
         geography="",
         method_profile_id="iso-basic",
+        pcf_method_id=PCFMethodID.PACT_V3,
         energy_mix_profile="",
         end_of_life_model="",
         collection_fraction_for_reuse=collection_reuse,

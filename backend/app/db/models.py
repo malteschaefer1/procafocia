@@ -64,6 +64,7 @@ class ScenarioModel(Base):
     system_boundary: Mapped[str] = mapped_column(String, nullable=False)
     geography: Mapped[str] = mapped_column(String, nullable=False)
     method_profile_id: Mapped[str] = mapped_column(String, nullable=False)
+    pcf_method_id: Mapped[str] = mapped_column(String, nullable=False, default="PACT_V3")
     energy_mix_profile: Mapped[str] = mapped_column(String, nullable=False)
     end_of_life_model: Mapped[str] = mapped_column(String, nullable=False)
     collection_fraction_for_reuse: Mapped[float] = mapped_column(Float, default=0.0)

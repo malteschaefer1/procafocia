@@ -32,7 +32,7 @@ def main() -> None:
 
     scenario_service = ScenarioService()
     scenario = scenario_service.get_scenario("default")
-    method = scenario_service.get_method_profile(scenario.method_profile_id)
+    method = scenario_service.get_method_profile(scenario.pcf_method_id)
 
     mapping_service = MappingService.from_settings([ProBasProvider(), BoaviztaProvider()], MappingRepository())
     mapping_log = mapping_service.map_bom(bom_items, scenario)
@@ -41,7 +41,7 @@ def main() -> None:
     product = Product(id=product_id, name="Demo Product", version="1", functional_unit="1 unit")
 
     pcf_service = PCFService(BrightwayPCFEngine())
-    pcf_results = pcf_service.run(bom_items, scenario, method)
+    pcf_results = pcf_service.run(product, bom_items, scenario, method)
 
     circularity_service = CircularityService(Bracquene2020CircularityEngine())
     circularity_results = circularity_service.run(product, bom_items, scenario)

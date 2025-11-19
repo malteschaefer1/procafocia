@@ -19,6 +19,14 @@ def test_health_endpoint():
     assert response.json()["status"] == "ok"
 
 
+def test_list_pcf_methods():
+    response = client.get("/pcf/methods")
+    assert response.status_code == 200
+    data = response.json()
+    assert "methods" in data
+    assert any(method["id"] == "PACT_V3" for method in data["methods"])
+
+
 def test_product_bom_and_pcf_flow():
     product_payload = {
         "id": "prod-1",
@@ -51,7 +59,7 @@ def test_product_bom_and_pcf_flow():
     assert review.status_code == 200
     assert len(review.json()) >= 1
 
-    response = client.post("/pcf/run", json={"product_id": "prod-1"})
+    response = client.post("/pcf/run", json={"product_id": "prod-1", "pcf_method_id": "PACT_V3"})
     assert response.status_code == 200
     body = response.json()
     assert "pcf_total_kg_co2e" in body

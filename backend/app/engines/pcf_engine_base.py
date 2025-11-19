@@ -1,11 +1,12 @@
 """PCF engine abstractions."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 
 from ..models.bom import BOMItem
 from ..models.method_profile import MethodProfile
+from ..models.product import Product
 from ..models.scenario import Scenario
 
 
@@ -24,6 +25,7 @@ class PCFResult:
     total_kg_co2e: float
     breakdown_by_item: dict[str, float]
     breakdown_by_stage: dict[str, float]
+    provenance: dict = field(default_factory=dict)
 
 
 class PCFEngine(Protocol):
@@ -32,5 +34,11 @@ class PCFEngine(Protocol):
     def map_bom_to_lci(self, bom: list[BOMItem], scenario: Scenario) -> LCIModel:
         raise NotImplementedError
 
-    def calculate_pcf(self, lci_model: LCIModel, scenario: Scenario, method_profile: MethodProfile) -> PCFResult:
+    def calculate_pcf(
+        self,
+        product: Product,
+        bom_items: list[BOMItem],
+        scenario: Scenario,
+        method_profile: MethodProfile,
+    ) -> PCFResult:
         raise NotImplementedError

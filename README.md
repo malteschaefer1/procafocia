@@ -23,6 +23,7 @@ No special hardware or paid services are required. The code sticks to plain Pyth
 - Canonical BOM samples, deterministic + fuzzy mapping rules with overrides, plus a mapping-review flow (API/CLI/UI) to inspect candidates before PCF/PCI runs.
 - FastAPI backend + minimal frontend for BOM upload, mapping review, and calculation triggers.
 - Audit bundle exporter and mapping history APIs for transparency.
+- PCF method catalog (PACT V3 + ISO/PEF/TfS/Catena-X stubs) exposed via `/pcf/methods`, selectable in the frontend, and threaded through every PCF calculation with provenance.
 
 ## Repository layout
 ```
@@ -43,7 +44,7 @@ examples/       # Sample BOM & script
    uvicorn backend.app.main:app --reload
    ```
 3. **Open frontend**: Serve `frontend/` (e.g., `python -m http.server 8080 -d frontend`) and ensure the backend is on `http://localhost:8000`.
-4. **Try the API**: Use `examples/demo_script.py --bom examples/bom_office_chair.csv` or call endpoints via `http://localhost:8000/docs` (e.g., `GET /circularity/pci/{product_id}`, `GET /mapping/review/{product_id}`).
+4. **Try the API**: Use `examples/demo_script.py --bom examples/bom_office_chair.csv` or call endpoints via `http://localhost:8000/docs` (e.g., `GET /circularity/pci/{product_id}`, `GET /mapping/review/{product_id}`, `GET /pcf/methods`).
 
 ## Tests
 ```
@@ -57,6 +58,7 @@ pytest backend/tests
 - Mapping review flow available via `/mapping/review/{product_id}` (also wired into the frontend button and `examples/mapping_review_cli.py`).
 - Seed data lives in `backend/app/data/mapping_rules_seed.json` and is loaded automatically on startup; edit or extend this file to reflect new datasets or rule systems.
 - Example BOMs for Product A (office chair) and Product B (cordless drill) are in `examples/`, matching the canonical schema for quick experimentation.
+- Scenarios now store a `pcf_method_id` (defaulting to `PACT_V3`) so every PCF run references a specific methodology; swap it via `/pcf/methods` + the frontend dropdown before triggering `/pcf/run`.
 
 ## Transparency & TODOs
 - All heavy PCF/PCI calculations include TODO markers where Brightway2 calls, EF lookups, or PCI equations must be filled in.
