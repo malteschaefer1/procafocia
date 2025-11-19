@@ -18,6 +18,11 @@ class Settings(BaseModel):
     database_url: str = "sqlite:///./procafocia.db"
     mapping_min_similarity_for_candidate: float = 0.6
     mapping_min_similarity_for_auto_accept: float = 0.85
+    soda4lca_base_url: str = ""
+    soda4lca_username: str | None = None
+    soda4lca_password: str | None = None
+    soda4lca_token: str | None = None
+    soda4lca_cache_dir: str = "cache/soda4lca"
 
 
 @lru_cache

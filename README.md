@@ -20,10 +20,10 @@ No special hardware or paid services are required. The code sticks to plain Pyth
 ## Features
 - Domain-centric models (`Product`, `BOMItem`, `Scenario`, `MethodProfile`, `ResultSet`) persisted in SQLite for reproducibility and provenance.
 - Swappable engine layer: Brightway2 PCF stub + PCI (Bracquené et al. 2020) flows with full linear-reference and per-material breakdowns.
-- Canonical BOM samples, deterministic + fuzzy mapping rules with overrides, plus a mapping-review flow (API/CLI/UI) to inspect candidates before PCF/PCI runs.
+- Canonical BOM samples, deterministic + fuzzy mapping rules with overrides, plus a mapping-review flow (API/CLI/UI) to inspect candidates before PCF/PCI runs. soda4LCA-backed lookups decouple public ÖKOBAUDAT datasets into our mapping workflow (UUID validations, cached metadata).
 - FastAPI backend + minimal frontend for BOM upload, mapping review, and calculation triggers.
 - Audit bundle exporter and mapping history APIs for transparency.
-- PCF method catalog (PACT V3 + ISO/PEF/TfS/Catena-X stubs) exposed via `/pcf/methods`, selectable in the frontend, and threaded through every PCF calculation with provenance.
+- PCF method catalog (PACT V3 + ISO/PEF/TfS/Catena-X stubs) exposed via `/pcf/methods`, selectable in the frontend, and threaded through every PCF calculation with provenance. Mapping data now records all candidate datasets plus soda4LCA cache references for future Brightway integration.
 
 ## Repository layout
 ```
@@ -53,17 +53,17 @@ pytest backend/tests
 
 ## Data & mapping enhancements
 - Canonical BOM schema includes: `product_id`, `bom_item_id`, parent references, mass, `material_family/material_code`, UNSPSC classification, supplier, circularity shares, and optional `lci_dataset_id`.
-- Deterministic rule order: BOM-specified dataset → material code → (`material_family` + `UNSPSC prefix`) → supplier override → fuzzy providers (RapidFuzz scoring with configurable thresholds).
+- Deterministic rule order: BOM-specified dataset → material code → (`material_family` + `UNSPSC prefix`) → supplier override → fuzzy providers (RapidFuzz scoring with configurable thresholds). Every candidate now keeps stage tags and placeholder Brightway/soda4LCA references so you can review/override before PCF runs.
 - Mapping state stored in SQLite (`procafocia.db`) with `mapping_rules` and `mapping_decisions` tables; history exposed via `/mapping/history/{product_id}` and overrides via `POST /mapping/override`.
-- Mapping review flow available via `/mapping/review/{product_id}` (also wired into the frontend button and `examples/mapping_review_cli.py`).
+- Mapping review flow available via `/mapping/review/{product_id}` (also wired into the frontend button and `examples/mapping_review_cli.py`) with per-candidate Brightway references and life-cycle stage tagging.
 - Seed data lives in `backend/app/data/mapping_rules_seed.json` and is loaded automatically on startup; edit or extend this file to reflect new datasets or rule systems.
 - Example BOMs for Product A (office chair) and Product B (cordless drill) are in `examples/`, matching the canonical schema for quick experimentation.
 - Scenarios now store a `pcf_method_id` (defaulting to `PACT_V3`) so every PCF run references a specific methodology; swap it via `/pcf/methods` + the frontend dropdown before triggering `/pcf/run`.
 
 ## Transparency & TODOs
-- All heavy PCF/PCI calculations include TODO markers where Brightway2 calls, EF lookups, or PCI equations must be filled in.
+- All heavy PCF/PCI calculations include TODO markers where Brightway2 calls, EF lookups, or PCI equations must be filled in (PACT V3 logic is currently metadata-only).
 - Mapping logs store provider, dataset, rule id, and reasoning for each BOM item.
-- Extend `ScenarioService` + `MethodProfile` to add more methods/boundaries quickly.
+- Extend scenario CRUD and Brightway integration to make PCF methods fully functional.
 
 ## License
 MIT License (see `LICENSE`).

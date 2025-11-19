@@ -14,6 +14,10 @@ class BoaviztaProvider:
         score = 0.5
         if "aluminum" in item.description.lower():
             score = 0.8
+        brightway_ref = {
+            "database": "stub-boavizta",
+            "code": f"boa_{item.id}",
+        }
         return [
             LCIProcessCandidate(
                 provider=self.name,
@@ -23,5 +27,7 @@ class BoaviztaProvider:
                 confidence_score=score,
                 mapping_rule_id="boa-fuzzy-description",
                 metadata={"heuristic": "description_contains_aluminum"},
+                life_cycle_stage="raw_materials",
+                brightway_reference=brightway_ref,
             )
         ]

@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 
 from ..data_providers.boavizta_provider import BoaviztaProvider
 from ..data_providers.probas_provider import ProBasProvider
+from ..data_providers.soda4lca_provider import Soda4LCAProvider
 from ..models.bom import BOMItem
 from ..schemas.mapping_schema import (
     MappingCandidateSchema,
@@ -15,7 +16,7 @@ from ..schemas.mapping_schema import (
     MappingOverrideRequest,
 )
 from ..services.mapping_repository import MappingRepository
-from ..services.mapping_service import MappingService
+from ..services.mapping_service import MappingDecision, MappingService
 from ..services.product_repository import ProductRepository
 from ..services.scenario_service import ScenarioService
 
@@ -23,7 +24,7 @@ router = APIRouter(prefix="/mapping", tags=["mapping"])
 _repository = MappingRepository()
 _product_repository = ProductRepository()
 _mapping_service = MappingService.from_settings(
-    providers=[ProBasProvider(), BoaviztaProvider()],
+    providers=[ProBasProvider(), BoaviztaProvider(), Soda4LCAProvider()],
     repository=_repository,
 )
 _scenario_service = ScenarioService()
@@ -35,27 +36,18 @@ def _candidate_to_schema(candidate) -> MappingCandidateSchema:
     return MappingCandidateSchema(**candidate.__dict__)
 
 
-def _model_to_decision_schema(model) -> MappingDecisionSchema:
-    payload = json.loads(model.decision_payload) if model.decision_payload else {}
-    alternatives = [MappingCandidateSchema(**alt) for alt in payload.get("alternatives", [])]
-    selected = None
-    if model.selected_dataset_id:
-        selected = MappingCandidateSchema(
-            provider=model.selected_provider,
-            dataset_id=model.selected_dataset_id,
-            confidence_score=model.confidence_score,
-            mapping_rule_id=model.rule_applied,
-            metadata={"decision_id": model.id},
-        )
+def _decision_to_schema(decision: MappingDecision) -> MappingDecisionSchema:
     return MappingDecisionSchema(
-        item_id=model.bom_item_id,
-        selected=selected,
-        alternatives=alternatives,
-        reasoning=payload.get("reasoning", ""),
-        rule_applied=model.rule_applied,
-        auto_selected=model.auto_selected,
-        override_applied=model.is_override,
-        confidence_score=model.confidence_score,
+        item_id=decision.item_id,
+        selected=_candidate_to_schema(decision.selected),
+        alternatives=[_candidate_to_schema(alt) for alt in decision.alternatives],
+        candidates=[_candidate_to_schema(candidate) for candidate in (decision.candidates or [])],
+        reasoning=decision.reasoning,
+        rule_applied=decision.rule_applied,
+        auto_selected=decision.auto_selected,
+        override_applied=decision.override_applied,
+        confidence_score=decision.confidence_score,
+        life_cycle_stage=decision.life_cycle_stage,
     )
 
 
@@ -78,6 +70,7 @@ def list_history(product_id: str) -> list[MappingHistorySchema]:
                 auto_selected=entry.auto_selected,
                 is_override=entry.is_override,
                 created_at=entry.created_at.isoformat(),
+                life_cycle_stage=(json.loads(entry.decision_payload).get("life_cycle_stage") if entry.decision_payload else None),
             )
             for entry in entries
         ]
@@ -93,26 +86,10 @@ def review_mapping(product_id: str, scenario_id: str = "default") -> list[Mappin
         raise HTTPException(status_code=404, detail="BOM not uploaded for product")
     scenario = _get_scenario_or_404(scenario_id)
 
-    with _repository.session() as session:
-        existing = _repository.latest_decisions_for_product(session, product_id)
-
-    if existing:
-        return [_model_to_decision_schema(entry) for entry in existing]
-
-    mapping_log = _mapping_service.map_bom(bom, scenario)
-    return [
-        MappingDecisionSchema(
-            item_id=decision.item_id,
-            selected=_candidate_to_schema(decision.selected),
-            alternatives=[_candidate_to_schema(alt) for alt in decision.alternatives],
-            reasoning=decision.reasoning,
-            rule_applied=decision.rule_applied,
-            auto_selected=decision.auto_selected,
-            override_applied=decision.override_applied,
-            confidence_score=decision.confidence_score,
-        )
-        for decision in mapping_log
-    ]
+    decisions = _mapping_service.load_latest_decisions(product_id)
+    if not decisions:
+        decisions = _mapping_service.map_bom(bom, scenario)
+    return [_decision_to_schema(decision) for decision in decisions]
 
 
 @router.post("/override", response_model=MappingDecisionSchema)
@@ -132,18 +109,10 @@ def create_override(payload: MappingOverrideRequest) -> MappingDecisionSchema:
         user_id=payload.user_id,
         comment=payload.comment,
         scenario=scenario,
+        life_cycle_stage=payload.life_cycle_stage,
     )
 
-    return MappingDecisionSchema(
-        item_id=decision.item_id,
-        selected=_candidate_to_schema(decision.selected),
-        alternatives=[_candidate_to_schema(alt) for alt in decision.alternatives],
-        reasoning=decision.reasoning,
-        rule_applied=decision.rule_applied,
-        auto_selected=decision.auto_selected,
-        override_applied=decision.override_applied,
-        confidence_score=decision.confidence_score,
-    )
+    return _decision_to_schema(decision)
 
 
 def _get_bom_item(bom_items: list[BOMItem], bom_item_id: str) -> BOMItem | None:

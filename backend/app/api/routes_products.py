@@ -19,6 +19,14 @@ def list_products() -> list[ProductResponse]:
     return [ProductResponse(**asdict(product)) for product in products]
 
 
+@router.get("/{product_id}", response_model=ProductResponse)
+def get_product(product_id: str) -> ProductResponse:
+    product = _repository.get_product(product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return ProductResponse(**asdict(product))
+
+
 @router.post("", response_model=ProductResponse)
 def create_product(payload: ProductCreate) -> ProductResponse:
     product = Product(

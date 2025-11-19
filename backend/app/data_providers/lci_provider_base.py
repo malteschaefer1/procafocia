@@ -18,6 +18,8 @@ class LCIProcessCandidate:
     confidence_score: float
     mapping_rule_id: str
     metadata: dict[str, str]
+    life_cycle_stage: str | None = None
+    brightway_reference: dict | None = None
 
 
 class LCIProvider(Protocol):

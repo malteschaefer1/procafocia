@@ -1,7 +1,7 @@
 """PCF orchestration service."""
 from __future__ import annotations
 
-from ..engines.pcf_engine_base import PCFEngine, PCFResult
+from ..engines.pcf_engine_base import LCIModel, PCFEngine, PCFResult
 from ..models.bom import BOMItem
 from ..models.method_profile import MethodProfile
 from ..models.product import Product
@@ -15,12 +15,20 @@ class PCFService:
     def __init__(self, engine: PCFEngine):
         self.engine = engine
 
-    def run(self, product: Product, bom: list[BOMItem], scenario: Scenario, method_profile: MethodProfile) -> ResultSet:
+    def run(
+        self,
+        product: Product,
+        bom: list[BOMItem],
+        scenario: Scenario,
+        method_profile: MethodProfile,
+        lci_model: LCIModel | None = None,
+    ) -> ResultSet:
         pcf_result: PCFResult = self.engine.calculate_pcf(
             product=product,
             bom_items=bom,
             scenario=scenario,
             method_profile=method_profile,
+            lci_model=lci_model,
         )
         result_set = ResultSet(
             id="result-pcf-demo",

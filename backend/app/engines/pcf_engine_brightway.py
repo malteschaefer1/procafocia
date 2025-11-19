@@ -1,13 +1,11 @@
 """Brightway2-based PCF engine stubs."""
 from __future__ import annotations
 
-from typing import Any
-
 from ..models.bom import BOMItem
 from ..models.method_profile import MethodProfile
 from ..models.product import Product
 from ..models.scenario import Scenario
-from .pcf_engine_base import LCIModel, PCFEngine, PCFResult
+from .pcf_engine_base import LCIEntry, LCIModel, PCFEngine, PCFResult
 
 
 class BrightwayPCFEngine(PCFEngine):
@@ -33,19 +31,23 @@ class BrightwayPCFEngine(PCFEngine):
     def map_bom_to_lci(self, bom: list[BOMItem], scenario: Scenario) -> LCIModel:
         """Convert BOM information into an LCI model structure."""
 
-        mappings: list[dict[str, Any]] = []
+        entries: list[LCIEntry] = []
         for item in bom:
             classification = getattr(item, "classification_unspsc", None)
-            mappings.append(
-                {
-                    "item_id": item.id,
-                    "process_key": f"stub-process-{item.material_code or classification}",
-                    "quantity": item.quantity,
-                    "mass_kg": item.mass_kg,
-                    "notes": "TODO: fetch dataset from Brightway and align units",
-                }
+            entries.append(
+                LCIEntry(
+                    bom_item_id=item.id,
+                    dataset_id=f"stub-process-{item.material_code or classification}",
+                    provider="stub",
+                    quantity=item.quantity,
+                    unit=item.unit or "ea",
+                    mass_kg=item.mass_kg,
+                    life_cycle_stage="raw_materials",
+                    brightway_reference={"database": "stub", "code": item.id},
+                    metadata={"notes": "TODO: fetch dataset from Brightway and align units"},
+                )
             )
-        return LCIModel(bom_items=bom, mappings=mappings)
+        return LCIModel(bom_items=bom, entries=entries)
 
     def calculate_pcf(
         self,
@@ -53,14 +55,18 @@ class BrightwayPCFEngine(PCFEngine):
         bom_items: list[BOMItem],
         scenario: Scenario,
         method_profile: MethodProfile,
+        lci_model: LCIModel | None = None,
     ) -> PCFResult:
         """Run a Brightway LCA and summarize PCF results."""
 
-        lci_model = self.map_bom_to_lci(bom_items, scenario)
+        if lci_model is None:
+            lci_model = self.map_bom_to_lci(bom_items, scenario)
         # TODO: Build Brightway demand vector using `lci_model` data.
         # TODO: Execute LCI + LCIA steps with the selected method profile.
-        total = sum(item.mass_kg * 1.5 for item in lci_model.bom_items)  # placeholder factor
-        breakdown_by_item = {item.id: item.mass_kg * 1.5 for item in lci_model.bom_items}
+        total = sum(entry.mass_kg * 1.5 for entry in lci_model.entries)  # placeholder factor
+        breakdown_by_item = {}
+        for entry in lci_model.entries:
+            breakdown_by_item[entry.bom_item_id] = breakdown_by_item.get(entry.bom_item_id, 0.0) + entry.mass_kg * 1.5
         breakdown_by_stage = {
             "materials": total * 0.6,
             "manufacturing": total * 0.3,

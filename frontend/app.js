@@ -82,21 +82,25 @@ async function loadMethods() {
 }
 
 async function ensureProductExists(productId) {
+  const existing = await safeFetch(`${API_BASE}/products/${productId}`);
+  if (!existing.error) {
+    return;
+  }
+  if (existing.status && existing.status !== 404) {
+    console.warn('Unexpected product lookup error', existing);
+    return;
+  }
   const payload = {
     id: productId,
     name: productId,
     version: '1',
     functional_unit: '1 unit',
   };
-  try {
-    await safeFetch(`${API_BASE}/products`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-  } catch (err) {
-    // Ignore if product already exists
-  }
+  await safeFetch(`${API_BASE}/products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 }
 
 async function safeFetch(url, options) {

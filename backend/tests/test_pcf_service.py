@@ -10,7 +10,7 @@ class _FakeEngine:
     def __init__(self):
         self.last_method_id = None
 
-    def calculate_pcf(self, product, bom_items, scenario, method_profile):
+    def calculate_pcf(self, product, bom_items, scenario, method_profile, lci_model=None):
         self.last_method_id = method_profile.id
         total = sum(item.mass_kg for item in bom_items)
         return PCFResult(

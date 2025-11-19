@@ -9,7 +9,8 @@ This document tracks what already works in Procafocia and what remains on the ro
 - **Backend scaffolding**: FastAPI app with structured packages (`backend/app`), configuration, logging, and dependency definitions (`pyproject.toml`).
 - **Data persistence**: SQLite database with SQLAlchemy models for products, BOM items, scenarios, mapping rules, and mapping decisions. Defaults (mapping rules + scenarios) are seeded during startup.
 - **Product & BOM flows**: REST endpoints for creating products, uploading/downloading BOMs, and storing everything via `ProductRepository`.
-- **Mapping system**: Deterministic + fuzzy matching using pluggable providers (ProBas + Boavizta stubs) with full provenance logging, override support, and transparency endpoints (`/mapping/history`, `/mapping/review`).
+- **Mapping system**: Deterministic + fuzzy matching using pluggable providers (ProBas + Boavizta stubs) with full provenance logging, override support, and transparency endpoints (`/mapping/history`, `/mapping/review`). soda4LCA (ÖKOBAUDAT) support validates BOM-supplied UUIDs and caches ILCD metadata for future Brightway imports.
+- **Mapping transparency upgrades**: Every mapping now stores all candidate datasets (with placeholder Brightway references) plus inferred life-cycle stages, so reviewers can confirm selections before running PCF.
 - **PCF pipeline**: Brightway2-based engine stub, PCF service, and `/pcf/run` API route that ties together products, BOMs, scenarios, recorded mappings, and the selected PCF method.
 - **PCF methods catalog**: Registry covering PACT V3 (full metadata) plus ISO/PEF/TfS/Catena-X stubs, exposed via `/pcf/methods`, selectable in the frontend, and passed through to the PCF engine + provenance.
 - **PCI pipeline**: Bracquené 2020 implementation with per-material flows, scenario-level circularity parameters, utility factor support, and `/circularity/pci/{product_id}` endpoint.
@@ -18,6 +19,7 @@ This document tracks what already works in Procafocia and what remains on the ro
 
 ## In progress / planned
 - **True Brightway2 integration**: Replace the PCF placeholder calculations with actual database imports, demand vector building, and LCIA execution. (Needs access to datasets + more elaborate method profiles.)
+- **PACT V3 completion**: Implement DQR scoring, primary-data checks, and real cradle-to-gate LCIA once Brightway results are available.
 - **Scenario & method CRUD**: Current scenarios are read-only seeds. Future work should add endpoints + UI to create/edit/delete scenarios and attach custom material parameter sets.
 - **User experience**: Frontend is intentionally minimal. Consider building a guided SPA, wizard, or documentation-driven walkthrough so non-technical users can explore mapping decisions and results more intuitively.
 - **Advanced mapping features**: Add more data providers, rule management screens, or machine-learning based suggestions. Include audit-bundle downloads (JSON/CSV zip) via the `export_service` stub.

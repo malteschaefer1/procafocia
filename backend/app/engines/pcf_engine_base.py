@@ -11,11 +11,26 @@ from ..models.scenario import Scenario
 
 
 @dataclass
+class LCIEntry:
+    """Represents a single dataset contribution to the LCI."""
+
+    bom_item_id: str
+    dataset_id: str
+    provider: str
+    quantity: float
+    unit: str
+    mass_kg: float
+    life_cycle_stage: str
+    brightway_reference: dict | None
+    metadata: dict | None = None
+
+
+@dataclass
 class LCIModel:
     """Placeholder for a life-cycle inventory representation."""
 
     bom_items: list[BOMItem]
-    mappings: list[dict]
+    entries: list[LCIEntry]
 
 
 @dataclass
@@ -40,5 +55,6 @@ class PCFEngine(Protocol):
         bom_items: list[BOMItem],
         scenario: Scenario,
         method_profile: MethodProfile,
+        lci_model: LCIModel | None = None,
     ) -> PCFResult:
         raise NotImplementedError

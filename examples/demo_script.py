@@ -36,12 +36,13 @@ def main() -> None:
 
     mapping_service = MappingService.from_settings([ProBasProvider(), BoaviztaProvider()], MappingRepository())
     mapping_log = mapping_service.map_bom(bom_items, scenario)
+    lci_model, _ = mapping_service.build_lci_model(product, bom_items, scenario)
 
     product_id = bom_items[0].product_id if bom_items else "demo-product"
     product = Product(id=product_id, name="Demo Product", version="1", functional_unit="1 unit")
 
     pcf_service = PCFService(BrightwayPCFEngine())
-    pcf_results = pcf_service.run(product, bom_items, scenario, method)
+    pcf_results = pcf_service.run(product, bom_items, scenario, method, lci_model=lci_model)
 
     circularity_service = CircularityService(Bracquene2020CircularityEngine())
     circularity_results = circularity_service.run(product, bom_items, scenario)

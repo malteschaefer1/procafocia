@@ -8,12 +8,13 @@ from pydantic import BaseModel
 
 from ..data_providers.boavizta_provider import BoaviztaProvider
 from ..data_providers.probas_provider import ProBasProvider
+from ..data_providers.soda4lca_provider import Soda4LCAProvider
 from ..engines.pcf_engine_brightway import BrightwayPCFEngine
 from ..models.method_profile import PCFMethodID
 from ..schemas.method_profile_schema import MethodProfileListResponse, MethodProfileSchema
 from ..schemas.results_schema import ResultSetSchema
 from ..services.mapping_repository import MappingRepository
-from ..services.mapping_service import MappingService
+from ..services.mapping_service import MappingDecision, MappingService
 from ..services.pcf_service import PCFService
 from ..services.product_repository import ProductRepository
 from ..services.scenario_service import ScenarioService
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/pcf", tags=["pcf"])
 _pcf_service = PCFService(engine=BrightwayPCFEngine())
 _mapping_repository = MappingRepository()
 _mapping_service = MappingService.from_settings(
-    providers=[ProBasProvider(), BoaviztaProvider()],
+    providers=[ProBasProvider(), BoaviztaProvider(), Soda4LCAProvider()],
     repository=_mapping_repository,
 )
 _product_repository = ProductRepository()
@@ -48,21 +49,15 @@ def run_pcf(request: PCFRunRequest) -> ResultSetSchema:
     method_id = request.pcf_method_id or scenario.pcf_method_id
     method_profile = _scenario_service.get_method_profile(method_id)
 
-    mapping_log = _mapping_service.map_bom(bom, scenario)
-    result_set = _pcf_service.run(product=product, bom=bom, scenario=scenario, method_profile=method_profile)
-    result_set.provenance["mapping_log"] = [
-        {
-            "item_id": entry.item_id,
-            "selected": asdict(entry.selected) if entry.selected else None,
-            "alternatives": [asdict(alt) for alt in entry.alternatives],
-            "reasoning": entry.reasoning,
-            "rule_applied": entry.rule_applied,
-            "auto_selected": entry.auto_selected,
-            "override_applied": entry.override_applied,
-            "confidence_score": entry.confidence_score,
-        }
-        for entry in mapping_log
-    ]
+    try:
+        lci_model, decisions = _mapping_service.build_lci_model(product, bom, scenario)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    result_set = _pcf_service.run(
+        product=product, bom=bom, scenario=scenario, method_profile=method_profile, lci_model=lci_model
+    )
+    result_set.provenance["mapping_log"] = [_decision_to_payload(decision) for decision in decisions]
 
     return ResultSetSchema(**result_set.__dict__)
 
@@ -78,3 +73,18 @@ def _get_scenario_or_404(scenario_id: str):
         return _scenario_service.get_scenario(scenario_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+def _decision_to_payload(decision: MappingDecision) -> dict:
+    return {
+        "item_id": decision.item_id,
+        "selected": asdict(decision.selected) if decision.selected else None,
+        "alternatives": [asdict(alt) for alt in decision.alternatives],
+        "candidates": [asdict(candidate) for candidate in (decision.candidates or [])],
+        "reasoning": decision.reasoning,
+        "rule_applied": decision.rule_applied,
+        "auto_selected": decision.auto_selected,
+        "override_applied": decision.override_applied,
+        "confidence_score": decision.confidence_score,
+        "life_cycle_stage": decision.life_cycle_stage,
+    }

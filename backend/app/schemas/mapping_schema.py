@@ -12,6 +12,8 @@ class MappingCandidateSchema(BaseModel):
     confidence_score: float | None = None
     mapping_rule_id: str | None = None
     metadata: dict | None = None
+    life_cycle_stage: str | None = None
+    brightway_reference: dict | None = None
 
 
 class MappingDecisionSchema(BaseModel):
@@ -23,6 +25,8 @@ class MappingDecisionSchema(BaseModel):
     auto_selected: bool
     override_applied: bool
     confidence_score: float | None
+    life_cycle_stage: str | None = None
+    candidates: list[MappingCandidateSchema] | None = None
 
 
 class MappingHistorySchema(BaseModel):
@@ -39,6 +43,7 @@ class MappingHistorySchema(BaseModel):
     auto_selected: bool
     is_override: bool
     created_at: str
+    life_cycle_stage: str | None = None
 
 
 class MappingOverrideRequest(BaseModel):
@@ -49,3 +54,4 @@ class MappingOverrideRequest(BaseModel):
     user_id: str | None = None
     comment: str | None = None
     scenario_id: str | None = None
+    life_cycle_stage: str | None = None
